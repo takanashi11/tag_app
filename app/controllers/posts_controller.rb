@@ -6,12 +6,13 @@ class PostsController < ApplicationController
   end
 
   def new
-    @post = Post.new
+    @post_form = PostForm.new
   end
 
   def create
-    @post = Post.new(post_params)
-    if @post.save
+    @post_form = PostForm.new(post_form_params)
+    if @post_form.valid?
+      @post_form.save
       redirect_to root_path
     else
       render :new
@@ -19,10 +20,18 @@ class PostsController < ApplicationController
   end
 
   def edit
+    # @postから情報をハッシュとして取り出し、@post_formとしてインスタンス生成する
+    post_attributes = @post.attributes
+    @post_form = PostForm.new(post_attributes)
+    @post_form.tag_name = @post.tags.first&.tag_name
   end
 
   def update
-    if @post.update(post_params)
+    # paramsの内容を反映したインスタンスを生成する
+    @post_form = PostForm.new(post_form_params)
+    @post_form.image ||= @post.image.blob
+    if @post_form.valid?
+      @post_form.update(post_form_params, @post)
       redirect_to root_path
     else
       render :edit
@@ -30,8 +39,8 @@ class PostsController < ApplicationController
   end
 
   private
-  def post_params
-    params.require(:post).permit(:text, :image)
+  def post_form_params
+    params.require(:post_form).permit(:text, :tag_name, :image)
   end
 
   def set_post
